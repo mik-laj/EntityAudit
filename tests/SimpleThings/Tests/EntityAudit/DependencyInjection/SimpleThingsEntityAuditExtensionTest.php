@@ -29,7 +29,10 @@ class SimpleThingsEntityAuditExtensionTest extends AbstractExtensionTestCase
         $this->assertContainerBuilderHasServiceDefinitionWithArgument('simplethings_entityaudit.username_callable.token_storage', 0, 'service_container');
 
         $this->assertContainerBuilderHasService('simplethings_entityaudit.config', 'SimpleThings\EntityAudit\AuditConfiguration');
-        $this->assertContainerBuilderHasServiceDefinitionWithMethodCall('simplethings_entityaudit.config', 'setAuditedEntityClasses', array('%simplethings.entityaudit.audited_entities%'));
+        $this->assertContainerBuilderHasServiceDefinitionFactory('simplethings_entityaudit.config', 'simplethings_entityaudit.config_factory', 'createAuditConfiguration');
+        $this->assertContainerBuilderHasServiceDefinitionWithArgument('simplethings_entityaudit.config', 0, 'doctrine.orm.default_configuration');
+        $this->assertContainerBuilderHasServiceDefinitionWithArgument('simplethings_entityaudit.config', 1, 'annotation_reader');
+        $this->assertContainerBuilderHasServiceDefinitionWithArgument('simplethings_entityaudit.config', 2, '%simplethings.entityaudit.audited_entities%');
         $this->assertContainerBuilderHasServiceDefinitionWithMethodCall('simplethings_entityaudit.config', 'setGlobalIgnoreColumns', array('%simplethings.entityaudit.global_ignore_columns%'));
         $this->assertContainerBuilderHasServiceDefinitionWithMethodCall('simplethings_entityaudit.config', 'setTablePrefix', array('%simplethings.entityaudit.table_prefix%'));
         $this->assertContainerBuilderHasServiceDefinitionWithMethodCall('simplethings_entityaudit.config', 'setTableSuffix', array('%simplethings.entityaudit.table_suffix%'));
@@ -109,5 +112,22 @@ class SimpleThingsEntityAuditExtensionTest extends AbstractExtensionTestCase
         return array(
             new SimpleThingsEntityAuditExtension(),
         );
+    }
+
+    /**
+     * Assert that the ContainerBuilder for this test has a service definition with the given id, which has a factory
+     * definition with the given arguments.
+     *
+     * @param string $serviceId
+     * @param string $factoryId
+     * @param string $factoryMethod
+     */
+    protected function assertContainerBuilderHasServiceDefinitionFactory($serviceId, $factoryId, $factoryMethod)
+    {
+        $definition = $this->container->findDefinition($serviceId);
+        $factory = $definition->getFactory();
+
+        $this->assertEquals($factoryId, (string)$factory[0]);
+        $this->assertEquals($factoryMethod, $factory[1]);
     }
 }
